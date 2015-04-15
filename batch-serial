@@ -16,17 +16,27 @@ import numpy as np
 import subprocess
 
 if __name__=='__main__':
-    parser = argparse.ArgumentParser(description='Fire up a batch starfit job')
+    parser = argparse.ArgumentParser(description='Fire up a batch serial job')
 
     parser.add_argument('file', type=str)
+    parser.add_argument('command', type=str, nargs='?', default=None, 
+                        help='Optional argument, to specify command to ' +
+                        'apply to each line of file')
     parser.add_argument('-n', '--nsplit', type=int, default=None,
-                        help='Total number of jobs to split into.  Will default to length of file.')
+                        help='Total number of jobs to split into.  ' +
+                        'Will default to length of file.')
     parser.add_argument('--ntasks_per_node', type=int, default=20,
                         help='number of cores to use per node.')
     
     parser.add_argument('-t', '--time', type=float, default=5,
-                        help='approximate time that one line will take, in minutes')
+                        help='approximate time that one line will take, '+
+                        'in minutes')
     
+    parser.add_argument('--test', action='store_true',
+                        help='If set, then just write batch script, not run')
+
+    parser.add_argument('args', nargs=argparse.REMAINDER)
+
     args = parser.parse_args()
     
     listfile = os.path.abspath(args.file)
@@ -60,12 +70,18 @@ if __name__=='__main__':
     fout.write('#SBATCH -t {}\n'.format(time_string))
     fout.write('\n')
     fout.write('for ((i=0; i<=$(expr $SLURM_NPROCS-1); i++)) do\n' +
-               ' awk "NR % ${{SLURM_NPROCS}} == $i" {} | '.format(listfile) +
-               'bash &\n')
+               ' awk "NR % ${{SLURM_NPROCS}} == $i" {} | '.format(listfile))
+    if args.command is not None:
+        fout.write('{} '.format(args.command))
+        fout.write(args.args.join(' '))
+        fout.write(' &\n')
+    else:
+        fout.write('bash &\n')
     fout.write('done\n' +
                'wait\n')
     fout.close()
 
-    #execute slurm batch job
-    subprocess.call('sbatch {}'.format(scriptfile), shell=True)
+    if not args.test:
+        #execute slurm batch job
+        subprocess.call('sbatch {}'.format(scriptfile), shell=True)
 
