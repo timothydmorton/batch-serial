@@ -61,8 +61,7 @@ if __name__=='__main__':
     fout.write('\n')
     fout.write('for ((i=0; i<=$(expr $SLURM_NPROCS-1); i++)) do\n' +
                ' awk "NR % ${{SLURM_NPROCS}} == $i" {} | '.format(listfile) +
-               'bash\n')
-    fout.write('&\n')
+               'bash &\n')
     fout.write('done\n' +
                'wait\n')
     fout.close()
