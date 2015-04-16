@@ -35,10 +35,16 @@ if __name__=='__main__':
     parser.add_argument('--test', action='store_true',
                         help='If set, then just write batch script, not run')
 
+    parser.add_argument('--qsched', type=str, default='slurm')
+    parser.add_argument('--condor', action='store_true')
+
     parser.add_argument('args', nargs=argparse.REMAINDER)
 
     args = parser.parse_args()
     
+    if args.condor:
+        args.qsched = 'condor'
+
     listfile = os.path.abspath(args.file)
 
     num_lines = sum(1 for line in open(listfile))
@@ -59,26 +65,38 @@ if __name__=='__main__':
     tot_minutes = args.time*num_per_job
     time_string = '{:02.0f}:{:02.0f}:00'.format(tot_minutes//60, tot_minutes % 60)
 
-            
-    scriptfile = '{}.batch'.format(listfile)
-
+    scriptfile = '{}.{}'.format(listfile, args.qsched)
     fout = open(scriptfile, 'w')
-    fout.write('#!/bin/bash\n')
-    fout.write('#SBATCH -J starfit-{}\n'.format(args.file))
-    fout.write('#SBATCH -N {}\n'.format(n_nodes))
-    fout.write('#SBATCH --ntasks-per-node={}\n'.format(ntasks_per_node))
-    fout.write('#SBATCH -t {}\n'.format(time_string))
-    fout.write('\n')
-    fout.write('for ((i=0; i<=$(expr $SLURM_NPROCS-1); i++)) do\n' +
-               ' awk "NR % ${{SLURM_NPROCS}} == $i" {} | '.format(listfile))
-    if args.command is not None:
-        fout.write('{} '.format(args.command))
-        fout.write(args.args.join(' '))
-        fout.write(' &\n')
-    else:
-        fout.write('bash &\n')
-    fout.write('done\n' +
-               'wait\n')
+
+    if args.qsched == 'slurm':
+            
+        fout.write('#!/bin/bash\n')
+        fout.write('#SBATCH -J starfit-{}\n'.format(args.file))
+        fout.write('#SBATCH -N {}\n'.format(n_nodes))
+        fout.write('#SBATCH --ntasks-per-node={}\n'.format(ntasks_per_node))
+        fout.write('#SBATCH -t {}\n'.format(time_string))
+        fout.write('\n')
+        fout.write('for ((i=0; i<=$(expr $SLURM_NPROCS-1); i++)) do\n' +
+                   ' awk "NR % ${{SLURM_NPROCS}} == $i" {} | '.format(listfile))
+        if args.command is not None:
+            fout.write('xargs {} '.format(args.command))
+            for arg in args.args:
+                fout.write('{} '.format(arg))
+            fout.write(' &\n')
+        else:
+            fout.write('bash &\n')
+        fout.write('done\n' +
+                   'wait\n')
+
+    elif args.qsched == 'condor':
+        if args.command is None:
+            raise ValueError('Must have command if launching condor script')
+
+        fout.write('universe = vanilla\n')
+        fout.write('executable = {}\n'.format(args.command))
+        
+
+
     fout.close()
 
     if not args.test:
