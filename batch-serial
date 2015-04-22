@@ -14,6 +14,7 @@ import os,re,sys,os.path,shutil,glob
 import argparse
 import numpy as np
 import subprocess
+from distutils.spawn import find_executable
 
 if __name__=='__main__':
     parser = argparse.ArgumentParser(description='Fire up a batch serial job')
@@ -34,6 +35,9 @@ if __name__=='__main__':
     
     parser.add_argument('--test', action='store_true',
                         help='If set, then just write batch script, not run')
+
+    parser.add_argument('--email', type=str, default=None,
+                        help='email address to message when job starts/stops')
 
     parser.add_argument('--qsched', type=str, default='slurm')
     parser.add_argument('--condor', action='store_true')
@@ -75,6 +79,10 @@ if __name__=='__main__':
         fout.write('#SBATCH -N {}\n'.format(n_nodes))
         fout.write('#SBATCH --ntasks-per-node={}\n'.format(ntasks_per_node))
         fout.write('#SBATCH -t {}\n'.format(time_string))
+        if args.email is not None:
+            fout.write('#SBATCH --mail-type=begin\n')
+            fout.write('#SBATCH --mail-type=end\n')
+            fout.write('#SBATCH --mail-user={}\n'.format(args.email))
         fout.write('\n')
         fout.write('for ((i=0; i<=$(expr $SLURM_NPROCS-1); i++)) do\n' +
                    ' awk "NR % ${{SLURM_NPROCS}} == $i" {} | '.format(listfile))
@@ -88,18 +96,49 @@ if __name__=='__main__':
         fout.write('done\n' +
                    'wait\n')
 
+        fout.close()
+        if not args.test:
+            #execute slurm batch job
+            subprocess.call('sbatch {}'.format(scriptfile), shell=True)
+
+
     elif args.qsched == 'condor':
         if args.command is None:
             raise ValueError('Must have command if launching condor script')
 
-        fout.write('universe = vanilla\n')
-        fout.write('executable = {}\n'.format(args.command))
+        runfolder = os.path.abspath('{}-condor'.format(listfile))
+        if os.path.exists(runfolder):
+            shutil.rmtree(runfolder)
+        os.makedirs(runfolder)
         
+        all_list = np.loadtxt(listfile, dtype=str)
+        for i in range(num_lines):
+            os.symlink(os.path.abspath(all_list[i]), 
+                       os.path.join(runfolder,'obj.{}'.format(i)))
+                                  
+
+        fout.write('universe = vanilla\n')
+        fout.write('executable = {}\n'.format(find_executable(args.command)))
+        if len(args.args ) > 0:
+             fout.write('arguments = ')
+             for arg in args.args:
+                 fout.write('{} '.format(arg))
+             fout.write('\n')
+        fout.write('getenv = True\n')
+        fout.write('output = job_output\n')
+        fout.write('error = job_error\n')
+        fout.write('log = job_log\n')
+        fout.write('initialdir = {}\n'.format(os.path.join(runfolder,
+                                                         'obj.$(Process)')))
+        #fout.write('requirements = OpSysMajorVersion == 6\n')
+        fout.write('requirements = OpSysAndVer != "CentOS5"\n')
+        fout.write('queue {}\n'.format(num_lines))
+        
+        fout.close()
+
+        if not args.test:
+            subprocess.call('condor_submit {}'.format(scriptfile), shell=True)
 
 
-    fout.close()
 
-    if not args.test:
-        #execute slurm batch job
-        subprocess.call('sbatch {}'.format(scriptfile), shell=True)
 
