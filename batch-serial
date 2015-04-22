@@ -90,7 +90,18 @@ if __name__=='__main__':
             fout.write('bash\n')
 
         fout.close()
-        cmd = 'sbatch --array=1-{} {}'.format(num_lines, scriptfile)
+        if num_lines <= 1000:
+            cmd = 'sbatch --array=1-{} {}'.format(num_lines, scriptfile)
+        else:
+            ilo = 1
+            ihi = 1000
+            cmd = 'sbatch --array=1-1000 {}'.format(scriptfile)
+            while ihi <= num_lines:
+                ilo += 1000
+                ihi = min(ilo+1000, num_lines)
+                cmd += 'sbatch --array={}-{} {}; '.format(ilo,
+                                                          ihi, 
+                                                          scriptfile)
         if not args.test:
             #execute slurm batch job
             subprocess.call(cmd, shell=True)
