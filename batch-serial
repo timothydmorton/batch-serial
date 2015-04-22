@@ -96,7 +96,7 @@ if __name__=='__main__':
             ilo = 1
             ihi = 1000
             cmd = 'sbatch --array=1-1000 {}'.format(scriptfile)
-            while ihi <= num_lines:
+            while ihi < num_lines:
                 ilo += 1000
                 ihi = min(ilo+1000, num_lines)
                 cmd += 'sbatch --array={}-{} {}; '.format(ilo,
