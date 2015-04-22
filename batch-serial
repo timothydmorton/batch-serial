@@ -90,11 +90,12 @@ if __name__=='__main__':
             fout.write('bash\n')
 
         fout.close()
+        cmd = 'sbatch --array=1-{} {}'.format(num_lines, scriptfile)
         if not args.test:
             #execute slurm batch job
-            subprocess.call('sbatch --array=1-{} {}'.format(num_lines,
-                                                            scriptfile), 
-                            shell=True)
+            subprocess.call(cmd, shell=True)
+        else:
+            print(cmd)
 
 
     elif args.qsched == 'condor':
