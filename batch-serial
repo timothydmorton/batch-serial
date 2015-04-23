@@ -75,7 +75,11 @@ if __name__=='__main__':
     if args.qsched == 'slurm':
             
         fout.write('#!/bin/bash\n')
-        fout.write('#SBATCH -J starfit-{}\n'.format(args.file))
+        if args.command is not none:
+            name = '{}-{}\n'.format(args.command,args.file)
+        else:
+            name = args.file
+        fout.write('#SBATCH -J {}\n'.format(name))
         fout.write('#SBATCH -N 1\n'.format(n_nodes))
         fout.write('#SBATCH --ntasks-per-node=1\n'.format(ntasks_per_node))
         fout.write('#SBATCH -t 00:65:00\n')
