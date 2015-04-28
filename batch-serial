@@ -67,7 +67,9 @@ if __name__=='__main__':
     if num_lines % nsplit != 0:
         num_per_job += 1
     tot_minutes = args.time*num_per_job
-    #time_string = '{:02.0f}:{:02.0f}:00'.format(tot_minutes//60, tot_minutes % 60)
+    if tot_minutes < 65:
+        tot_minutes = 65
+    time_string = '{:02.0f}:{:02.0f}:00'.format(tot_minutes//60, tot_minutes % 60)
 
     scriptfile = '{}.{}'.format(listfile, args.qsched)
     fout = open(scriptfile, 'w')
@@ -82,7 +84,7 @@ if __name__=='__main__':
         fout.write('#SBATCH -J {}\n'.format(name))
         fout.write('#SBATCH -N 1\n'.format(n_nodes))
         fout.write('#SBATCH --ntasks-per-node=1\n'.format(ntasks_per_node))
-        fout.write('#SBATCH -t 00:65:00\n')
+        fout.write('#SBATCH -t {}\n'.format(time_string))
         fout.write('\n')
         #fout.write('sed -n ${{SLURM_ARRAY_TASK_ID}}p {} | '.format(listfile))
         fout.write('awk "NR % {} == $(expr ${{SLURM_ARRAY_TASK_ID}} - 1)" {} | '.format(nsplit,listfile))
