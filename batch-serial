@@ -75,7 +75,7 @@ if __name__=='__main__':
     if args.qsched == 'slurm':
             
         fout.write('#!/bin/bash\n')
-        if args.command is not none:
+        if args.command is not None:
             name = '{}-{}\n'.format(args.command,args.file)
         else:
             name = args.file
