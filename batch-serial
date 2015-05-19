@@ -6,7 +6,6 @@ Launches batch job running every line of input file.
 Uses slurm job array by default, but could be reconfigured
 to another batch scheduler if desired.
 
-By default assumes 20 cores per node.
 """
 from __future__ import print_function, division
 
@@ -26,7 +25,7 @@ if __name__=='__main__':
     parser.add_argument('-n', '--nsplit', type=int, default=None,
                         help='Total number of jobs to split into.  ' +
                         'Will default to length of file.')
-    parser.add_argument('--ntasks_per_node', type=int, default=20,
+    parser.add_argument('--ntasks_per_node', type=int, default=1,
                         help='number of cores to use per node.')
     
     parser.add_argument('-t', '--time', type=float, default=5,
