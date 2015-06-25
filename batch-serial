@@ -125,7 +125,7 @@ if __name__=='__main__':
         else:
             name = args.file
         fout.write('#$ -N {}\n'.format(name))
-        fout.write('#$ -l h rt={}\n'.format(time_string))
+        fout.write('#$ -l h_rt={}\n'.format(time_string))
         fout.write('#$ -t 1-{}'.format(nsplit))
         fout.write('\n')
         #fout.write('sed -n ${{SLURM_ARRAY_TASK_ID}}p {} | '.format(listfile))
