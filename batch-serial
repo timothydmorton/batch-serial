@@ -40,6 +40,7 @@ if __name__=='__main__':
 
     parser.add_argument('--qsched', type=str, default='slurm')
     parser.add_argument('--condor', action='store_true')
+    parser.add_argument('--sge', action='store_true')
 
     parser.add_argument('args', nargs=argparse.REMAINDER)
 
@@ -47,6 +48,8 @@ if __name__=='__main__':
     
     if args.condor:
         args.qsched = 'condor'
+    if args.sge:
+        args.qsched = 'sge'
 
     listfile = os.path.abspath(args.file)
 
