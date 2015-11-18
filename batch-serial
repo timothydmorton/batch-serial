@@ -40,6 +40,7 @@ if __name__=='__main__':
 
     parser.add_argument('--qsched', type=str, default='slurm')
     parser.add_argument('--condor', action='store_true')
+    parser.add_argument('--sge', action='store_true')
 
     parser.add_argument('args', nargs=argparse.REMAINDER)
 
@@ -47,6 +48,8 @@ if __name__=='__main__':
     
     if args.condor:
         args.qsched = 'condor'
+    if args.sge:
+        args.qsched = 'sge'
 
     listfile = os.path.abspath(args.file)
 
@@ -114,6 +117,35 @@ if __name__=='__main__':
         else:
             print(cmd)
 
+    elif args.qsched == 'sge':
+        
+        fout.write('#!/bin/bash\n')
+        if args.command is not None:
+            name = '{}-{}\n'.format(args.command,args.file)
+        else:
+            name = args.file
+        fout.write('#$ -N {}\n'.format(name))
+        fout.write('#$ -l h_rt={}\n'.format(time_string))
+        fout.write('#$ -t 1-{}\n'.format(nsplit))
+        fout.write('#$ -cwd\n')
+        fout.write('\n')
+        #fout.write('sed -n ${{SLURM_ARRAY_TASK_ID}}p {} | '.format(listfile))
+        fout.write('awk "NR % {} == $(expr ${{SGE_TASK_ID}} - 1)" {} | '.format(nsplit,listfile))
+        if args.command is not None:
+            fout.write('xargs {} '.format(args.command))
+            for arg in args.args:
+                fout.write('{} '.format(arg))
+            fout.write('\n')
+        else:
+            fout.write('bash\n')
+
+        fout.close()
+        cmd = 'qsub {}'.format(scriptfile)
+        if not args.test:
+            #execute SGE batch job
+            subprocess.call(cmd, shell=True)
+        else:
+            print(cmd)
 
     elif args.qsched == 'condor':
         if args.command is None:
