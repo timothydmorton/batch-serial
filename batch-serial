@@ -31,6 +31,8 @@ if __name__=='__main__':
     parser.add_argument('-t', '--time', type=float, default=5,
                         help='approximate time that one line will take, '+
                         'in minutes')
+    parser.add_argument('--mem', type=float, default=None, 
+                        help='RAM needed per CPU (Gb). Only implemented for slurm.')
 
     parser.add_argument('--test', action='store_true',
                         help='If set, then just write batch script, not run')
@@ -87,6 +89,8 @@ if __name__=='__main__':
         fout.write('#SBATCH -N 1\n'.format(n_nodes))
         fout.write('#SBATCH --ntasks-per-node=1\n'.format(ntasks_per_node))
         fout.write('#SBATCH -t {}\n'.format(time_string))
+        if args.mem is not None:
+            fout.write('#SBATCH --mem-per-cpu={:.0f}\n'.format(args.mem*1000))
         fout.write('\n')
         #fout.write('sed -n ${{SLURM_ARRAY_TASK_ID}}p {} | '.format(listfile))
         fout.write('awk "NR % {} == $(expr ${{SLURM_ARRAY_TASK_ID}} - 1)" {} | '.format(nsplit,listfile))
