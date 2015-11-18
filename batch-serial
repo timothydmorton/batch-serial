@@ -31,7 +31,7 @@ if __name__=='__main__':
     parser.add_argument('-t', '--time', type=float, default=5,
                         help='approximate time that one line will take, '+
                         'in minutes')
-    
+
     parser.add_argument('--test', action='store_true',
                         help='If set, then just write batch script, not run')
 
