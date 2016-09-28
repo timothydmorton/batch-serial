@@ -43,6 +43,7 @@ if __name__=='__main__':
     parser.add_argument('--qsched', type=str, default='slurm')
     parser.add_argument('--condor', action='store_true')
     parser.add_argument('--sge', action='store_true')
+    parser.add_argument('--tmax', type=float, help='max hours total allowed', default=None)
 
     parser.add_argument('args', nargs=argparse.REMAINDER)
 
@@ -73,6 +74,8 @@ if __name__=='__main__':
     tot_minutes = args.time*num_per_job
     if tot_minutes < 65:
         tot_minutes = 65
+    if args.tmax is not None:
+        tot_minutes = min(tot_minutes, args.tmax*60)
     time_string = '{:02.0f}:{:02.0f}:00'.format(tot_minutes//60, tot_minutes % 60)
 
     scriptfile = '{}.{}'.format(listfile, args.qsched)
