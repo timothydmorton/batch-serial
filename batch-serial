@@ -128,9 +128,10 @@ if __name__=='__main__':
         
         fout.write('#!/bin/bash\n')
         if args.command is not None:
-            name = '{}-{}\n'.format(args.command,args.file)
+            name = '{}-{}\n'.format(os.path.basename(args.command),
+                                    os.path.basename(args.file))
         else:
-            name = args.file
+            name = os.path.basename(args.file)
         fout.write('#$ -N {}\n'.format(name))
         fout.write('#$ -l h_rt={}\n'.format(time_string))
         fout.write('#$ -t 1-{}\n'.format(nsplit))
