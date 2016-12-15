@@ -132,6 +132,7 @@ if __name__=='__main__':
                                     os.path.basename(args.file))
         else:
             name = os.path.basename(args.file)
+        fout.write('#$ -V\n') #
         fout.write('#$ -N {}\n'.format(name))
         fout.write('#$ -l h_rt={}\n'.format(time_string))
         fout.write('#$ -t 1-{}\n'.format(nsplit))
