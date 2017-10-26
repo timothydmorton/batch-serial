@@ -89,8 +89,9 @@ if __name__=='__main__':
         else:
             name = args.file
         fout.write('#SBATCH -J {}\n'.format(name))
-        fout.write('#SBATCH -N 1\n'.format(n_nodes))
-        fout.write('#SBATCH --ntasks-per-node=1\n'.format(ntasks_per_node))
+#         fout.write('#SBATCH -N 1\n'.format(n_nodes))
+#         fout.write('#SBATCH --ntasks-per-node=1\n'.format(ntasks_per_node))
+        fout.write('#SBATCH -n 1\n')
         fout.write('#SBATCH -t {}\n'.format(time_string))
         if args.mem is not None:
             fout.write('#SBATCH --mem-per-cpu={:.0f}\n'.format(args.mem*1000))
