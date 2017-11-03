@@ -25,6 +25,8 @@ if __name__=='__main__':
     parser.add_argument('-n', '--nsplit', type=int, default=None,
                         help='Total number of jobs to split into.  ' +
                         'Will default to length of file.')
+    parser.add_argument('--nstart', type=int, default=1,
+                        help='job array number to start at (e.g. after cancel)')
     parser.add_argument('--ntasks_per_node', type=int, default=1,
                         help='number of cores to use per node.')
     
@@ -108,11 +110,11 @@ if __name__=='__main__':
 
         fout.close()
         if nsplit <= 1000:
-            cmd = 'sbatch --array=1-{} {}'.format(nsplit, scriptfile)
+            cmd = 'sbatch --array={}-{} {}'.format(args.nstart, nsplit, scriptfile)
         else:
-            ilo = 1
-            ihi = 1000
-            cmd = 'sbatch --array=1-1000 {}; '.format(scriptfile)
+            ilo = args.nstart
+            ihi = ilo + 999
+            cmd = 'sbatch --array={}-{} {}; '.format(ilo, ihi, scriptfile)
             while ihi < nsplit:
                 ilo += 1000
                 ihi = min(ilo+999, nsplit)
